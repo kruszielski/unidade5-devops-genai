@@ -16,7 +16,8 @@ O ciclo completo foi executado de verdade e está registrado no repositório:
 | Correção validada | `logs/pipeline-run-2-corrigido.log` | 12 passed |
 
 A narrativa detalhada das decisões (o que a IA sugeriu, o que aceitei e o que corrigi) está em
-[`docs/DECISOES-CORRECAO.md`](docs/DECISOES-CORRECAO.md).
+[`docs/DECISOES-CORRECAO.md`](docs/DECISOES-CORRECAO.md). O texto pronto para o fórum da disciplina,
+com os links dos pipelines, está em [`POSTAGEM-FORUM.md`](POSTAGEM-FORUM.md).
 
 ## Estrutura
 
