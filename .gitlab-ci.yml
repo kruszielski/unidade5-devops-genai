@@ -1,0 +1,46 @@
+# Pipeline do Projeto Integrador (Unidade 5) — GitLab CI
+#
+# Estágio 1 (test): roda a suíte e publica o stdout como artefato de log.
+# Estágio 2 (analyze): o agente GenAI lê esse log e devolve um relatório Markdown.
+# O job de análise tem allow_failure: a IA é apoio ao diagnóstico, não portão de merge.
+
+stages:
+  - test
+  - analyze
+
+default:
+  image: python:3.11-slim
+  before_script:
+    # Sem pipefail, `pytest | tee` devolve o código de saída do TEE (sempre 0) e o
+    # pipeline ficaria VERDE mesmo com testes quebrando.
+    - set -o pipefail
+    - python -V
+    - pip install --quiet -r requirements.txt
+
+python-tests:
+  stage: test
+  script:
+    - mkdir -p logs
+    - pytest -v --tb=long | tee "logs/pipeline-${CI_PIPELINE_ID}.log"
+  artifacts:
+    when: always
+    paths:
+      - logs/
+    expire_in: 1 week
+
+genai-analysis:
+  stage: analyze
+  needs:
+    - job: python-tests
+      artifacts: true
+      optional: true
+  allow_failure: true
+  script:
+    # GENAI_BASE_URL / GENAI_MODEL / GENAI_API_KEY vêm dos CI/CD Variables (masked).
+    # Sem elas, o agente cai no modo heurístico e ainda assim produz evidência.
+    - LOG=$(ls logs/pipeline-*.log | head -1)
+    - python -m agent.analyze_log "$LOG" --out "reports/analise-genai-${CI_PIPELINE_ID}.md"
+  artifacts:
+    when: always
+    paths:
+      - reports/

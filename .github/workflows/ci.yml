@@ -1,0 +1,68 @@
+name: CI
+
+# Espelho do pipeline GitLab do laboratório, executando no GitHub Actions.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências de teste
+        run: pip install -r requirements.txt
+
+      - name: Testes automatizados (pytest)
+        # pipefail é obrigatório: sem ele o `tee` mascara o exit code do pytest.
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -m pytest -v --tb=long | tee "logs/pipeline-run-${GITHUB_RUN_NUMBER}.log"
+
+      - name: Publicar log do job
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-log
+          path: logs/
+
+  genai-analysis:
+    needs: test
+    if: always()          # a análise é justamente mais útil quando o teste falha
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Baixar log do job de testes
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-log
+          path: logs/
+
+      - name: Diagnóstico com IA generativa
+        env:
+          # Secrets opcionais: sem eles o agente usa o fallback heurístico determinístico.
+          GENAI_BASE_URL: ${{ secrets.GENAI_BASE_URL }}
+          GENAI_MODEL: ${{ secrets.GENAI_MODEL }}
+          GENAI_API_KEY: ${{ secrets.GENAI_API_KEY }}
+        run: |
+          LOG=$(ls logs/pipeline-*.log | head -1)
+          python -m agent.analyze_log "$LOG" --out "reports/analise-genai-run-${GITHUB_RUN_NUMBER}.md"
+
+      - name: Publicar relatório de análise
+        uses: actions/upload-artifact@v4
+        with:
+          name: genai-report
+          path: reports/
