@@ -17,7 +17,7 @@ DEFAULTS: dict[str, Any] = {
     "aliquota_icms": 0.18,              # usado por app.pricing
     "frete_gratis_acima_de": "300.00",  # limite INCLUSIVO (regra R4)
     "custo_frete_padrao": "25.00",
-    "max_reserva": 50,                  # BUG intencional: consumidor lê outro nome
+    "estoque_maximo_reserva": 50,       # usado por app.inventory
 }
 
 _ENV_PREFIX = "PEDIDOS_"

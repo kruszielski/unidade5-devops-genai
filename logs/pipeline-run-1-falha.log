@@ -1,0 +1,73 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.4, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/macbookpro/.cline/data/workspaces/chat/POS ENGENHARIA IA/unidade5-devops-genai
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.14.2
+collecting ... collected 12 items
+
+tests/test_inventory.py::test_reserva_dentro_do_limite FAILED            [  8%]
+tests/test_inventory.py::test_reserva_no_teto_configurado_e_permitida PASSED [ 16%]
+tests/test_inventory.py::test_reserva_acima_do_limite_e_recusada PASSED  [ 25%]
+tests/test_inventory.py::test_quantidade_zero_e_recusada_antes_de_ler_config PASSED [ 33%]
+tests/test_inventory.py::test_sku_vazio_e_recusado PASSED                [ 41%]
+tests/test_pricing.py::test_pedido_pequeno_paga_frete_e_imposto PASSED   [ 50%]
+tests/test_pricing.py::test_cupom_desconta_antes_de_calcular_imposto PASSED [ 58%]
+tests/test_pricing.py::test_frete_gratis_acima_do_limite PASSED          [ 66%]
+tests/test_pricing.py::test_frete_gratis_no_limite_exato FAILED          [ 75%]
+tests/test_pricing.py::test_cupom_inexistente_e_erro_claro PASSED        [ 83%]
+tests/test_pricing.py::test_quantidade_nao_positiva_e_recusada PASSED    [ 91%]
+tests/test_pricing.py::test_pedido_vazio_e_recusado PASSED               [100%]
+
+=================================== FAILURES ===================================
+________________________ test_reserva_dentro_do_limite _________________________
+
+    def test_reserva_dentro_do_limite():
+>       reserva = reservar(carregar_configuracao(), "SKU-42", 10)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_inventory.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config = {'aliquota_icms': 0.18, 'custo_frete_padrao': '25.00', 'frete_gratis_acima_de': '300.00', 'max_reserva': 50}
+sku = 'SKU-42', quantidade = 10
+
+    def reservar(
+        config: Mapping[str, Any],
+        sku: str,
+        quantidade: int,
+    ) -> dict[str, Any]:
+        """Reserva ``quantidade`` unidades de ``sku``, respeitando o teto configurado.
+    
+        Validações na ordem: sku → quantidade → limite configurado. O limite vem da
+        configuração para que a área de operações ajuste sem deploy.
+        """
+        if not sku or not str(sku).strip():
+            raise ValueError("O sku do item é obrigatório.")
+    
+        quantidade = int(quantidade)
+        if quantidade <= 0:
+            raise ValueError(f"A quantidade reservada deve ser maior que zero (recebi {quantidade}).")
+    
+>       limite = int(config["estoque_maximo_reserva"])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'estoque_maximo_reserva'
+
+app/inventory.py:29: KeyError
+______________________ test_frete_gratis_no_limite_exato _______________________
+
+    def test_frete_gratis_no_limite_exato():
+        """R4 é limite inclusivo: R$ 300,00 líquidos já têm frete grátis."""
+        totais = calcular_total([item(preco="300.00")], config=CONFIG_PADRAO)
+    
+        assert totais["liquido"] == Decimal("300.00")
+>       assert totais["frete"] == Decimal("0.00")
+E       AssertionError: assert Decimal('25.00') == Decimal('0.00')
+E        +  where Decimal('0.00') = Decimal('0.00')
+
+tests/test_pricing.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_inventory.py::test_reserva_dentro_do_limite - KeyError: 'es...
+FAILED tests/test_pricing.py::test_frete_gratis_no_limite_exato - AssertionEr...
+========================= 2 failed, 10 passed in 0.04s =========================

@@ -66,7 +66,7 @@ def calcular_total(
     imposto = liquido * _decimal(cfg["aliquota_icms"])   # R3
 
     limite_frete_gratis = _decimal(cfg["frete_gratis_acima_de"])
-    if liquido > limite_frete_gratis:                    # BUG intencional: limite exclusivo
+    if liquido >= limite_frete_gratis:                   # R4 — limite INCLUSIVO
         frete = Decimal("0.00")
     else:
         frete = _decimal(cfg["custo_frete_padrao"])

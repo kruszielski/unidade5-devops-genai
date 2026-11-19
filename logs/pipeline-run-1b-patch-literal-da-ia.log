@@ -1,0 +1,48 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.4, pytest-9.0.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+cachedir: .pytest_cache
+rootdir: /private/tmp/ai-patch-demo
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.14.2
+collecting ... collected 12 items
+
+tests/test_inventory.py::test_reserva_dentro_do_limite PASSED            [  8%]
+tests/test_inventory.py::test_reserva_no_teto_configurado_e_permitida PASSED [ 16%]
+tests/test_inventory.py::test_reserva_acima_do_limite_e_recusada FAILED  [ 25%]
+tests/test_inventory.py::test_quantidade_zero_e_recusada_antes_de_ler_config PASSED [ 33%]
+tests/test_inventory.py::test_sku_vazio_e_recusado PASSED                [ 41%]
+tests/test_pricing.py::test_pedido_pequeno_paga_frete_e_imposto PASSED   [ 50%]
+tests/test_pricing.py::test_cupom_desconta_antes_de_calcular_imposto PASSED [ 58%]
+tests/test_pricing.py::test_frete_gratis_acima_do_limite PASSED          [ 66%]
+tests/test_pricing.py::test_frete_gratis_no_limite_exato FAILED          [ 75%]
+tests/test_pricing.py::test_cupom_inexistente_e_erro_claro PASSED        [ 83%]
+tests/test_pricing.py::test_quantidade_nao_positiva_e_recusada PASSED    [ 91%]
+tests/test_pricing.py::test_pedido_vazio_e_recusado PASSED               [100%]
+
+=================================== FAILURES ===================================
+___________________ test_reserva_acima_do_limite_e_recusada ____________________
+
+    def test_reserva_acima_do_limite_e_recusada():
+        config = carregar_configuracao({"estoque_maximo_reserva": 5})
+    
+>       with pytest.raises(ValueError, match="excede o limite configurado de 5"):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_inventory.py:26: Failed
+______________________ test_frete_gratis_no_limite_exato _______________________
+
+    def test_frete_gratis_no_limite_exato():
+        """R4 é limite inclusivo: R$ 300,00 líquidos já têm frete grátis."""
+        totais = calcular_total([item(preco="300.00")], config=CONFIG_PADRAO)
+    
+        assert totais["liquido"] == Decimal("300.00")
+>       assert totais["frete"] == Decimal("0.00")
+E       AssertionError: assert Decimal('25.00') == Decimal('0.00')
+E        +  where Decimal('0.00') = Decimal('0.00')
+
+tests/test_pricing.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_inventory.py::test_reserva_acima_do_limite_e_recusada - Fai...
+FAILED tests/test_pricing.py::test_frete_gratis_no_limite_exato - AssertionEr...
+========================= 2 failed, 10 passed in 0.03s =========================
